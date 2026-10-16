@@ -84,17 +84,17 @@ up, so going through the service avoids that too.)
 
 `graft-cline-mcp` takes an **flock per project**
 (`~/.local/state/graft-cline/<hash>/bridge.lock`). The global config used to pin
-it to `--project /home/wburt59/scorehalo`, so **every** session — whatever its
+it to `--project /home/<user>/scorehalo`, so **every** session — whatever its
 directory — tried to start a bridge for scorehalo; all but the lock holder
 exited 1 with `mcp connect failed server=graft … "another Graft bridge is already
-active for /home/wburt59/scorehalo"`. Seen ~30 times in a single morning, once
+active for /home/<user>/scorehalo"`. Seen ~30 times in a single morning, once
 per session.
 
 Fix: the entry was **removed from the global config** and moved to
-`/home/wburt59/scorehalo/opencode.jsonc`. Now only sessions **under scorehalo**
+`/home/<user>/scorehalo/opencode.jsonc`. Now only sessions **under scorehalo**
 start graft; every other session simply has no graft and no error. Verified:
-`opencode mcp list` from `/home/wburt59` → no graft; from
-`/home/wburt59/scorehalo` → `graft connected`.
+`opencode mcp list` from `/home/<user>` → no graft; from
+`/home/<user>/scorehalo` → `graft connected`.
 
 Consequence for layer 2: the **Graft event log is now scorehalo-only**. For every
 other project the audit trail is **`memory.md` (the baton) alone**. (Two
