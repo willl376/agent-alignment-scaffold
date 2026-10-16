@@ -1,0 +1,80 @@
+// Portable enforcement snippet — copy the two blocks below into your own
+// opencode.jsonc (V2). See ALIGNMENT.md for the reasoning and the honest limits.
+//
+// KEY GOTCHAS that cost real debugging time:
+//  * Rules are matched LAST-MATCH-WINS, so the "ask" gates must come BEFORE
+//    the "deny" rules they overlap with.
+//  * Paths inside the Location are matched RELATIVE to it (".lightning/x"),
+//    NOT as "~/.lightning/x". Use a leading "*" to absorb a directory prefix.
+//  * The "deny" cases are the load-bearing ones. VERIFY a deny actually fires;
+//    a mis-scoped rule fails silently as an allow.
+
+"permissions": [
+  // ── Secrets: credential material is neither read nor written ──
+  { "action": "read", "resource": "*.env", "effect": "ask" },
+  { "action": "read", "resource": "*.pem", "effect": "ask" },
+  { "action": "read", "resource": "*credential*", "effect": "ask" },
+  { "action": "read", "resource": "*.ssh/*", "effect": "deny" },
+  { "action": "edit", "resource": "*.ssh/*", "effect": "deny" },
+  { "action": "read", "resource": "*.gnupg/*", "effect": "deny" },
+  { "action": "edit", "resource": "*.gnupg/*", "effect": "deny" },
+  { "action": "read", "resource": "*.aws/*", "effect": "deny" },
+  { "action": "edit", "resource": "*.aws/*", "effect": "deny" },
+  { "action": "read", "resource": "*.lightning/*", "effect": "deny" },
+  { "action": "edit", "resource": "*.lightning/*", "effect": "deny" },
+  { "action": "read", "resource": "*.netrc", "effect": "deny" },
+  { "action": "read", "resource": "*id_rsa*", "effect": "deny" },
+  { "action": "read", "resource": "*service.json", "effect": "deny" },
+  { "action": "edit", "resource": "*service.json", "effect": "deny" },
+
+  // ── Self-governance: never silently rewrite one's own gates ──
+  { "action": "edit", "resource": "*opencode.json*", "effect": "ask" },
+  { "action": "edit", "resource": "*moral-compass.md", "effect": "ask" },
+  { "action": "edit", "resource": "*.local/share/opencode/*", "effect": "ask" },
+
+  // ── Privacy: the webcam is opt-in, per capture ──
+  { "action": "camera_camera_capture", "resource": "*", "effect": "ask" },
+  { "action": "camera_camera_see", "resource": "*", "effect": "ask" },
+  { "action": "camera_camera_ask", "resource": "*", "effect": "ask" },
+
+  // ── Catastrophic shell: hard-blocked ──
+  { "action": "shell", "resource": "sudo *", "effect": "deny" },
+  { "action": "shell", "resource": "su *", "effect": "deny" },
+  { "action": "shell", "resource": "mkfs*", "effect": "deny" },
+  { "action": "shell", "resource": "dd *of=/dev/*", "effect": "deny" },
+  { "action": "shell", "resource": "shred *", "effect": "deny" },
+  { "action": "shell", "resource": "* > /dev/sd*", "effect": "deny" },
+  { "action": "shell", "resource": "* > /dev/nvme*", "effect": "deny" },
+  { "action": "shell", "resource": "curl * | sh", "effect": "deny" },
+  { "action": "shell", "resource": "curl * | bash", "effect": "deny" },
+  { "action": "shell", "resource": "wget * | sh", "effect": "deny" },
+  { "action": "shell", "resource": "wget * | bash", "effect": "deny" },
+
+  // ── Consequential shell: pause for a human ──
+  { "action": "shell", "resource": "rm -rf *", "effect": "ask" },
+  { "action": "shell", "resource": "rm -r *", "effect": "ask" },
+  { "action": "shell", "resource": "pkill *", "effect": "ask" },
+  { "action": "shell", "resource": "killall *", "effect": "ask" },
+  { "action": "shell", "resource": "kill *", "effect": "ask" },
+  { "action": "shell", "resource": "reboot*", "effect": "ask" },
+  { "action": "shell", "resource": "shutdown*", "effect": "ask" },
+  { "action": "shell", "resource": "poweroff*", "effect": "ask" },
+  { "action": "shell", "resource": "systemctl *", "effect": "ask" },
+  { "action": "shell", "resource": "git push*", "effect": "ask" },
+  { "action": "shell", "resource": "git reset --hard*", "effect": "ask" },
+  { "action": "shell", "resource": "git clean -*", "effect": "ask" },
+  { "action": "shell", "resource": "chmod -R 777*", "effect": "ask" },
+
+  // ── REA: tools that execute/debug/attach a target are consequential ──
+  { "action": "rea_*frida*", "resource": "*", "effect": "ask" },
+  { "action": "rea_*debug*", "resource": "*", "effect": "ask" },
+  { "action": "rea_*spawn*", "resource": "*", "effect": "ask" },
+  { "action": "rea_*attach*", "resource": "*", "effect": "ask" },
+  { "action": "rea_*run*", "resource": "*", "effect": "ask" }
+],
+
+// Hard-deny policy: runs AFTER rules and saved approvals; can only deny.
+"policies": [
+  { "action": "tool.use", "resource": "shell:sudo *", "effect": "deny" },
+  { "action": "tool.use", "resource": "shell:su *", "effect": "deny" }
+]
